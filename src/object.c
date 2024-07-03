@@ -83,11 +83,14 @@ robj *createRawStringObject(const char *ptr, size_t len) {
  * an object where the sds string is actually an unmodifiable string
  * allocated in the same chunk as the object itself. */
 robj *createEmbeddedStringObject(const char *ptr, size_t len) {
+    // 连续分配空间
     robj *o = zmalloc(sizeof(robj)+sizeof(struct sdshdr8)+len+1);
+    // 创建SDS结构指针
     struct sdshdr8 *sh = (void*)(o+1);
 
     o->type = OBJ_STRING;
     o->encoding = OBJ_ENCODING_EMBSTR;
+    // 数据指针
     o->ptr = sh+1;
     o->refcount = 1;
     if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {
@@ -459,6 +462,8 @@ robj *tryObjectEncoding(robj *o) {
          * Note that we avoid using shared integers when maxmemory is used
          * because every object needs to have a private LRU field for the LRU
          * algorithm to work well. */
+        
+        // String类型的3种实现
         if ((server.maxmemory == 0 ||
             !(server.maxmemory_policy & MAXMEMORY_FLAG_NO_SHARED_INTEGERS)) &&
             value >= 0 &&

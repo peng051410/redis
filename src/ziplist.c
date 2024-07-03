@@ -397,6 +397,7 @@ unsigned int zipStoreEntryEncoding(unsigned char *p, unsigned char encoding, uns
 int zipStorePrevEntryLengthLarge(unsigned char *p, unsigned int len) {
     if (p != NULL) {
         p[0] = ZIP_BIG_PREVLEN;
+        // 将前一个列表的长度值拷贝到第2-5字节，len=4
         memcpy(p+1,&len,sizeof(len));
         memrev32ifbe(p+1);
     }
@@ -410,6 +411,7 @@ unsigned int zipStorePrevEntryLength(unsigned char *p, unsigned int len) {
         return (len < ZIP_BIG_PREVLEN) ? 1 : sizeof(len)+1;
     } else {
         if (len < ZIP_BIG_PREVLEN) {
+            // 小于254，返回prelen为1
             p[0] = len;
             return 1;
         } else {
@@ -576,11 +578,13 @@ void zipEntry(unsigned char *p, zlentry *e) {
 
 /* Create a new empty ziplist. */
 unsigned char *ziplistNew(void) {
+    // 初始分配的大小 32*2+16
     unsigned int bytes = ZIPLIST_HEADER_SIZE+ZIPLIST_END_SIZE;
     unsigned char *zl = zmalloc(bytes);
     ZIPLIST_BYTES(zl) = intrev32ifbe(bytes);
     ZIPLIST_TAIL_OFFSET(zl) = intrev32ifbe(ZIPLIST_HEADER_SIZE);
     ZIPLIST_LENGTH(zl) = 0;
+    // 将列表尾设置为255
     zl[bytes-1] = ZIP_END;
     return zl;
 }

@@ -35,6 +35,7 @@
 typedef struct intset {
     uint32_t encoding;
     uint32_t length;
+    // 连续的空间，避免内存浪费
     int8_t contents[];
 } intset;
 

@@ -119,6 +119,7 @@ void zslFree(zskiplist *zsl) {
  * The return value of this function is between 1 and ZSKIPLIST_MAXLEVEL
  * (both inclusive), with a powerlaw-alike distribution where higher
  * levels are less likely to be returned. */
+//随机生成节点层数
 int zslRandomLevel(void) {
     int level = 1;
     while ((random()&0xFFFF) < (ZSKIPLIST_P * 0xFFFF))
@@ -135,7 +136,9 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, sds ele) {
     int i, level;
 
     serverAssert(!isnan(score));
+    // 获取表头
     x = zsl->header;
+    // 从最大层数开始遍历
     for (i = zsl->level-1; i >= 0; i--) {
         /* store rank that is crossed to reach the insert position */
         rank[i] = i == (zsl->level-1) ? 0 : rank[i+1];
@@ -1183,6 +1186,7 @@ void zsetConvert(robj *zobj, int encoding) {
             serverPanic("Unknown target encoding");
 
         zs = zmalloc(sizeof(*zs));
+        // 创建dict和skipList
         zs->dict = dictCreate(&zsetDictType,NULL);
         zs->zsl = zslCreate();
 
@@ -1379,9 +1383,11 @@ int zsetAdd(robj *zobj, double score, sds ele, int *flags, double *newscore) {
                 *flags |= ZADD_NOP;
                 return 1;
             }
+            //从哈希表中查询元素的权重
             curscore = *(double*)dictGetVal(de);
 
             /* Prepare the score for the increment if needed. */
+            // 如果需要更新元素权重
             if (incr) {
                 score += curscore;
                 if (isnan(score)) {
@@ -1392,18 +1398,24 @@ int zsetAdd(robj *zobj, double score, sds ele, int *flags, double *newscore) {
             }
 
             /* Remove and re-insert when score changes. */
+            // 权重变化
             if (score != curscore) {
+                // 更新跳表节点
                 znode = zslUpdateScore(zs->zsl,curscore,ele,score);
                 /* Note that we did not removed the original element from
                  * the hash table representing the sorted set, so we just
                  * update the score. */
+                // 让哈希表元素的值指向跳表结果的权重
                 dictGetVal(de) = &znode->score; /* Update score ptr. */
                 *flags |= ZADD_UPDATED;
             }
             return 1;
+            // 新元素不存在
         } else if (!xx) {
             ele = sdsdup(ele);
+            // 插入跳表结点
             znode = zslInsert(zs->zsl,score,ele);
+            // 新插入哈希表元素
             serverAssert(dictAdd(zs->dict,ele,&znode->score) == DICT_OK);
             *flags |= ZADD_ADDED;
             if (newscore) *newscore = score;

@@ -809,9 +809,10 @@ struct sharedObjectsStruct {
 
 /* ZSETs use a specialized version of Skiplists */
 typedef struct zskiplistNode {
-    sds ele;
-    double score;
-    struct zskiplistNode *backward;
+    sds ele; //元素
+    double score; //元素权重值
+    struct zskiplistNode *backward; //后向指针
+    // 节点level数组，保存每层的前向指针和跨度
     struct zskiplistLevel {
         struct zskiplistNode *forward;
         unsigned long span;
@@ -824,6 +825,7 @@ typedef struct zskiplist {
     int level;
 } zskiplist;
 
+// zset定义
 typedef struct zset {
     dict *dict;
     zskiplist *zsl;

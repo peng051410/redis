@@ -42,13 +42,13 @@
  * attempted_compress: 1 bit, boolean, used for verifying during testing.
  * extra: 10 bits, free for future use; pads out the remainder of 32 bits */
 typedef struct quicklistNode {
-    struct quicklistNode *prev;
-    struct quicklistNode *next;
-    unsigned char *zl;
+    struct quicklistNode *prev; //前向节点
+    struct quicklistNode *next; //后向节点
+    unsigned char *zl;  //ziplist指针
     unsigned int sz;             /* ziplist size in bytes */
     unsigned int count : 16;     /* count of items in ziplist */
     unsigned int encoding : 2;   /* RAW==1 or LZF==2 */
-    unsigned int container : 2;  /* NONE==1 or ZIPLIST==2 */
+    unsigned int container : 2;  /* NONE==1 or ZIPLIST==2 */ // 存储 方式
     unsigned int recompress : 1; /* was this node previous compressed? */
     unsigned int attempted_compress : 1; /* node can't compress; too small */
     unsigned int extra : 10; /* more bits to steal for future usage */
@@ -71,8 +71,8 @@ typedef struct quicklistLZF {
  *                of quicklistNodes to leave uncompressed at ends of quicklist.
  * 'fill' is the user-requested (or default) fill factor. */
 typedef struct quicklist {
-    quicklistNode *head;
-    quicklistNode *tail;
+    quicklistNode *head; // 头指针
+    quicklistNode *tail; // 尾指针
     unsigned long count;        /* total count of all entries in all ziplists */
     unsigned long len;          /* number of quicklistNodes */
     int fill : 16;              /* fill factor for individual nodes */

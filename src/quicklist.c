@@ -438,10 +438,12 @@ REDIS_STATIC int _quicklistNodeAllowInsert(const quicklistNode *node,
         ziplist_overhead += 5;
 
     /* new_sz overestimates if 'sz' encodes to an integer type */
+    // 计算新插入元素后的大小
     unsigned int new_sz = node->sz + sz + ziplist_overhead;
     if (likely(_quicklistNodeSizeMeetsOptimizationRequirement(new_sz, fill)))
         return 1;
     else if (!sizeMeetsSafetyLimit(new_sz))
+        //超过了8K
         return 0;
     else if ((int)node->count < fill)
         return 1;

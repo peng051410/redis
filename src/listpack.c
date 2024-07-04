@@ -50,23 +50,23 @@
 #define LP_ENCODING_INT 0
 #define LP_ENCODING_STRING 1
 
-#define LP_ENCODING_7BIT_UINT 0
+#define LP_ENCODING_7BIT_UINT 0 //0XXXXXXX
 #define LP_ENCODING_7BIT_UINT_MASK 0x80
 #define LP_ENCODING_IS_7BIT_UINT(byte) (((byte)&LP_ENCODING_7BIT_UINT_MASK)==LP_ENCODING_7BIT_UINT)
 
-#define LP_ENCODING_6BIT_STR 0x80
+#define LP_ENCODING_6BIT_STR 0x80 //10XXXXXX
 #define LP_ENCODING_6BIT_STR_MASK 0xC0
 #define LP_ENCODING_IS_6BIT_STR(byte) (((byte)&LP_ENCODING_6BIT_STR_MASK)==LP_ENCODING_6BIT_STR)
 
-#define LP_ENCODING_13BIT_INT 0xC0
+#define LP_ENCODING_13BIT_INT 0xC0 //110XXXXX XXXXXXXX
 #define LP_ENCODING_13BIT_INT_MASK 0xE0
 #define LP_ENCODING_IS_13BIT_INT(byte) (((byte)&LP_ENCODING_13BIT_INT_MASK)==LP_ENCODING_13BIT_INT)
 
-#define LP_ENCODING_12BIT_STR 0xE0
+#define LP_ENCODING_12BIT_STR 0xE0 //11100000 XXXXXXXX
 #define LP_ENCODING_12BIT_STR_MASK 0xF0
 #define LP_ENCODING_IS_12BIT_STR(byte) (((byte)&LP_ENCODING_12BIT_STR_MASK)==LP_ENCODING_12BIT_STR)
 
-#define LP_ENCODING_16BIT_INT 0xF1
+#define LP_ENCODING_16BIT_INT 0xF1 //11110001 00000000 00000000
 #define LP_ENCODING_16BIT_INT_MASK 0xFF
 #define LP_ENCODING_IS_16BIT_INT(byte) (((byte)&LP_ENCODING_16BIT_INT_MASK)==LP_ENCODING_16BIT_INT)
 
@@ -204,9 +204,12 @@ int lpStringToInt64(const char *s, unsigned long slen, int64_t *value) {
 /* Create a new, empty listpack.
  * On success the new listpack is returned, otherwise an error is returned. */
 unsigned char *lpNew(void) {
+    // 创建一个空的LP
     unsigned char *lp = lp_malloc(LP_HDR_SIZE+1);
     if (lp == NULL) return NULL;
+    //设置listpack的大小
     lpSetTotalBytes(lp,LP_HDR_SIZE+1);
+    //设置listpack的元素个数
     lpSetNumElements(lp,0);
     lp[LP_HDR_SIZE] = LP_EOF;
     return lp;
@@ -294,6 +297,7 @@ int lpEncodeGetType(unsigned char *ele, uint32_t size, unsigned char *intenc, ui
  * 1 to 5. If 'buf' is NULL the function just returns the number of bytes
  * needed in order to encode the backlen. */
 unsigned long lpEncodeBacklen(unsigned char *buf, uint64_t l) {
+    //编码类型和实际数据的总长度小于等于127，entry-len长度为1字节
     if (l <= 127) {
         if (buf) buf[0] = l;
         return 1;
@@ -399,7 +403,7 @@ unsigned char *lpSkip(unsigned char *p) {
  * already pointed to the last element of the listpack. */
 unsigned char *lpNext(unsigned char *lp, unsigned char *p) {
     ((void) lp); /* lp is not used for now. However lpPrev() uses it. */
-    p = lpSkip(p);
+    p = lpSkip(p); //偏移指向下个列表项
     if (p[0] == LP_EOF) return NULL;
     return p;
 }

@@ -127,7 +127,7 @@ typedef struct raxNode {
      * children, an additional value pointer is present (as you can see
      * in the representation above as "value-ptr" field).
      */
-    unsigned char data[];
+    unsigned char data[]; //实际存储的数据
 } raxNode;
 
 typedef struct rax {

@@ -82,7 +82,7 @@ typedef long long ustime_t; /* microsecond time type. */
 #define CONFIG_DEFAULT_DYNAMIC_HZ 1             /* Adapt hz to # of clients.*/
 #define CONFIG_DEFAULT_HZ        10             /* Time interrupt calls/sec. */
 #define CONFIG_MIN_HZ            1
-#define CONFIG_MAX_HZ            500
+#define CONFIG_MAX_HZ            500            //server后台任务的最大运行频率
 #define MAX_CLIENTS_PER_CLOCK_TICK 200          /* HZ is adapted based on that. */
 #define CONFIG_DEFAULT_SERVER_PORT        6379  /* TCP port. */
 #define CONFIG_DEFAULT_TCP_BACKLOG       511    /* TCP listen backlog. */

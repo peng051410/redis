@@ -1084,6 +1084,7 @@ int handleClientsWithPendingWrites(void) {
     listNode *ln;
     int processed = listLength(server.clients_pending_write);
 
+    // 获取客户端列表
     listRewind(server.clients_pending_write,&li);
     while((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
@@ -1099,6 +1100,7 @@ int handleClientsWithPendingWrites(void) {
 
         /* If after the synchronous writes above we still have data to
          * output to the client, we need to install the writable handler. */
+        // 还有待写数据
         if (clientHasPendingReplies(c)) {
             int ae_flags = AE_WRITABLE;
             /* For the fsync=always policy, we want that a given FD is never
@@ -1111,6 +1113,7 @@ int handleClientsWithPendingWrites(void) {
             {
                 ae_flags |= AE_BARRIER;
             }
+            // 创建写事件并设置回调函数
             if (aeCreateFileEvent(server.el, c->fd, ae_flags,
                 sendReplyToClient, c) == AE_ERR)
             {

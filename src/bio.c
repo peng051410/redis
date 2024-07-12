@@ -61,10 +61,14 @@
 #include "server.h"
 #include "bio.h"
 
+//保存线程描述符的数组
 static pthread_t bio_threads[BIO_NUM_OPS];
+//保存互斥锁的数组
 static pthread_mutex_t bio_mutex[BIO_NUM_OPS];
+// 保存条件变量的两个数组
 static pthread_cond_t bio_newjob_cond[BIO_NUM_OPS];
 static pthread_cond_t bio_step_cond[BIO_NUM_OPS];
+// 以后台线程方式运行的任务列表
 static list *bio_jobs[BIO_NUM_OPS];
 /* The following array is used to hold the number of pending jobs for every
  * OP type. This allows us to export the bioPendingJobsOfType() API that is
@@ -72,6 +76,7 @@ static list *bio_jobs[BIO_NUM_OPS];
  * objects shared with the background thread. The main thread will just wait
  * that there are no longer jobs of this type to be executed before performing
  * the sensible operation. This data is also useful for reporting. */
+// 被阻塞的后台任务数
 static unsigned long long bio_pending[BIO_NUM_OPS];
 
 /* This structure represents a background Job. It is only used locally to this
@@ -120,6 +125,7 @@ void bioInit(void) {
      * responsible of. */
     for (j = 0; j < BIO_NUM_OPS; j++) {
         void *arg = (void*)(unsigned long) j;
+        // 4个参数分别是线程描述符、线程属性、线程函数、线程函数的参数
         if (pthread_create(&thread,&attr,bioProcessBackgroundJobs,arg) != 0) {
             serverLog(LL_WARNING,"Fatal: Can't initialize Background Jobs.");
             exit(1);
@@ -128,6 +134,13 @@ void bioInit(void) {
     }
 }
 
+/**
+ * 创建一个后台任务
+ * @param type 任务类型
+ * @param arg1 后台任务的参数1
+ * @param arg2 后台任务的参数2
+ * @param arg3 后台任务的参数3
+ */
 void bioCreateBackgroundJob(int type, void *arg1, void *arg2, void *arg3) {
     struct bio_job *job = zmalloc(sizeof(*job));
 
@@ -136,6 +149,7 @@ void bioCreateBackgroundJob(int type, void *arg1, void *arg2, void *arg3) {
     job->arg2 = arg2;
     job->arg3 = arg3;
     pthread_mutex_lock(&bio_mutex[type]);
+    // 将任务添加到任务队列中
     listAddNodeTail(bio_jobs[type],job);
     bio_pending[type]++;
     pthread_cond_signal(&bio_newjob_cond[type]);
@@ -207,6 +221,7 @@ void *bioProcessBackgroundJobs(void *arg) {
         /* Lock again before reiterating the loop, if there are no longer
          * jobs to process we'll block again in pthread_cond_wait(). */
         pthread_mutex_lock(&bio_mutex[type]);
+        // 从任务队列中删除已经处理的任务
         listDelNode(bio_jobs[type],ln);
         bio_pending[type]--;
 

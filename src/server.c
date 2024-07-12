@@ -3746,6 +3746,7 @@ void createPidFile(void) {
     }
 }
 
+//守护进程
 void daemonize(void) {
     int fd;
 
@@ -3755,6 +3756,7 @@ void daemonize(void) {
     /* Every output goes to /dev/null. If Redis is daemonized but
      * the 'logfile' is set to 'stdout' in the configuration file
      * it will not log at all. */
+    // 转向/dev/null，不再依赖终端
     if ((fd = open("/dev/null", O_RDWR, 0)) != -1) {
         dup2(fd, STDIN_FILENO);
         dup2(fd, STDOUT_FILENO);
@@ -4230,6 +4232,7 @@ int main(int argc, char **argv) {
         linuxMemoryWarnings();
     #endif
         moduleLoadFromQueue();
+        // 相关模块加载后的初始化
         InitServerLast();
         loadDataFromDisk();
         if (server.cluster_enabled) {

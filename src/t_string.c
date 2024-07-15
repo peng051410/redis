@@ -80,6 +80,7 @@ void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire,
     if ((flags & OBJ_SET_NX && lookupKeyWrite(c->db,key) != NULL) ||
         (flags & OBJ_SET_XX && lookupKeyWrite(c->db,key) == NULL))
     {
+        // If the key already exists and the NX flag is used, or the key does not exist and the XX flag is used, the command will not be executed.
         addReply(c, abort_reply ? abort_reply : shared.nullbulk);
         return;
     }

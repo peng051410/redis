@@ -1447,8 +1447,10 @@ void processInputBuffer(client *c) {
         /* Determine request type when unknown. */
         if (!c->reqtype) {
             if (c->querybuf[c->qb_pos] == '*') {
+                // 符合RESP协议
                 c->reqtype = PROTO_REQ_MULTIBULK;
             } else {
+                // 管道类型命令
                 c->reqtype = PROTO_REQ_INLINE;
             }
         }

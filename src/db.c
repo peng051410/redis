@@ -1113,13 +1113,17 @@ long long getExpire(redisDb *db, robj *key) {
 void propagateExpire(redisDb *db, robj *key, int lazy) {
     robj *argv[2];
 
+    // 使用的命令
     argv[0] = lazy ? shared.unlink : shared.del;
+    // 被淘汰的key
     argv[1] = key;
     incrRefCount(argv[0]);
     incrRefCount(argv[1]);
 
     if (server.aof_state != AOF_OFF)
+        // 开启AOF，将淘汰的key写入AOF文件
         feedAppendOnlyFile(server.delCommand,db->id,argv,2);
+    // 同步删除命令到从节点
     replicationFeedSlaves(server.slaves,db->id,argv,2);
 
     decrRefCount(argv[0]);

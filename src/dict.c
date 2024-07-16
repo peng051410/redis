@@ -369,6 +369,7 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
     if (d->ht[0].used == 0 && d->ht[1].used == 0) return NULL;
 
     if (dictIsRehashing(d)) _dictRehashStep(d);
+    // 计算key的hash值
     h = dictHashKey(d, key);
 
     for (table = 0; table <= 1; table++) {
@@ -382,7 +383,7 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
                     prevHe->next = he->next;
                 else
                     d->ht[table].table[idx] = he->next;
-                if (!nofree) {
+                if (!nofree) { //同步删除
                     dictFreeKey(d, he);
                     dictFreeVal(d, he);
                     zfree(he);

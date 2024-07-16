@@ -208,6 +208,7 @@ void *bioProcessBackgroundJobs(void *arg) {
              * arg2 & arg3 -> free two dictionaries (a Redis DB).
              * only arg3 -> free the skiplist. */
             if (job->arg1)
+              // 异步释放对象
                 lazyfreeFreeObjectFromBioThread(job->arg1);
             else if (job->arg2 && job->arg3)
                 lazyfreeFreeDatabaseFromBioThread(job->arg2,job->arg3);

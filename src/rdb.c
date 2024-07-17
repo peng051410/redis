@@ -1047,8 +1047,10 @@ int rdbSaveKeyValuePair(rio *rdb, robj *key, robj *val, long long expiretime) {
 /* Save an AUX field. */
 ssize_t rdbSaveAuxField(rio *rdb, void *key, size_t keylen, void *val, size_t vallen) {
     ssize_t ret, len = 0;
+    // 写入操作码
     if ((ret = rdbSaveType(rdb,RDB_OPCODE_AUX)) == -1) return -1;
     len += ret;
+    // 写入key和value
     if ((ret = rdbSaveRawString(rdb,key,keylen)) == -1) return -1;
     len += ret;
     if ((ret = rdbSaveRawString(rdb,val,vallen)) == -1) return -1;
@@ -1076,6 +1078,7 @@ int rdbSaveInfoAuxFields(rio *rdb, int flags, rdbSaveInfo *rsi) {
 
     /* Add a few fields about the state when the RDB was created. */
     if (rdbSaveAuxFieldStrStr(rdb,"redis-ver",REDIS_VERSION) == -1) return -1;
+    // 架构信息
     if (rdbSaveAuxFieldStrInt(rdb,"redis-bits",redis_bits) == -1) return -1;
     if (rdbSaveAuxFieldStrInt(rdb,"ctime",time(NULL)) == -1) return -1;
     if (rdbSaveAuxFieldStrInt(rdb,"used-mem",zmalloc_used_memory()) == -1) return -1;
@@ -1150,8 +1153,11 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi) {
 
     if (server.rdb_checksum)
         rdb->update_cksum = rioGenericUpdateChecksum;
+    //生成魔数
     snprintf(magic,sizeof(magic),"REDIS%04d",RDB_VERSION);
+    // 将magic写入到rdb中
     if (rdbWriteRaw(rdb,magic,9) == -1) goto werr;
+    // 写入redis server属性信息
     if (rdbSaveInfoAuxFields(rdb,flags,rsi) == -1) goto werr;
     if (rdbSaveModulesAux(rdb, REDISMODULE_AUX_BEFORE_RDB) == -1) goto werr;
 
@@ -1163,6 +1169,7 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi) {
 
         /* Write the SELECT DB opcode */
         if (rdbSaveType(rdb,RDB_OPCODE_SELECTDB) == -1) goto werr;
+        // 写入db的id
         if (rdbSaveLen(rdb,j) == -1) goto werr;
 
         /* Write the RESIZE DB opcode. We trim the size to UINT32_MAX, which
@@ -1184,6 +1191,7 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi) {
 
             initStaticStringObject(key,keystr);
             expire = getExpire(db,&key);
+            // 存储key-value对
             if (rdbSaveKeyValuePair(rdb,&key,o,expire) == -1) goto werr;
 
             /* When this RDB is produced as part of an AOF rewrite, move
@@ -1218,12 +1226,14 @@ int rdbSaveRio(rio *rdb, int *error, int flags, rdbSaveInfo *rsi) {
     if (rdbSaveModulesAux(rdb, REDISMODULE_AUX_AFTER_RDB) == -1) goto werr;
 
     /* EOF opcode */
+    // 写结束标识码
     if (rdbSaveType(rdb,RDB_OPCODE_EOF) == -1) goto werr;
 
     /* CRC64 checksum. It will be zero if checksum computation is disabled, the
      * loading code skips the check in this case. */
     cksum = rdb->cksum;
     memrev64ifbe(&cksum);
+    // 写校验值
     if (rioWrite(rdb,&cksum,8) == 0) goto werr;
     return C_OK;
 
@@ -1268,6 +1278,7 @@ int rdbSave(char *filename, rdbSaveInfo *rsi) {
     int error = 0;
 
     snprintf(tmpfile,256,"temp-%d.rdb", (int) getpid());
+    // 先写入临时文件
     fp = fopen(tmpfile,"w");
     if (!fp) {
         char *cwdp = getcwd(cwd,MAXPATHLEN);
@@ -1353,6 +1364,7 @@ int rdbSaveBackground(char *filename, rdbSaveInfo *rsi) {
             server.child_info_data.cow_size = private_dirty;
             sendChildInfo(CHILD_INFO_TYPE_RDB);
         }
+        // 退出子进程
         exitFromChild((retval == C_OK) ? 0 : 1);
     } else {
         /* Parent */
@@ -2351,6 +2363,7 @@ int rdbSaveToSlavesSockets(rdbSaveInfo *rsi) {
         closeListeningSockets(0);
         redisSetProcTitle("redis-rdb-to-slaves");
 
+        // 在二进制数据的后面加上标识字符串
         retval = rdbSaveRioWithEOFMark(&slave_sockets,NULL,rsi);
         if (retval == C_OK && rioFlush(&slave_sockets) == 0)
             retval = C_ERR;
